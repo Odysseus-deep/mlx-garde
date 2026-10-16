@@ -63,7 +63,19 @@ func jobLine(j lock.Job, now time.Time) string {
 	if j.PID == 0 {
 		return "(starting)"
 	}
-	return fmt.Sprintf("%s  (pid %d, %s, in %s)", j.Command, j.PID, now.Sub(j.Since).Round(time.Second), j.Dir)
+	return fmt.Sprintf("%s  (pid %d, %s, in %s)", j.Command, j.PID, now.Sub(j.Since).Round(time.Second), tilde(j.Dir))
+}
+
+func tilde(dir string) string {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return dir
+	}
+	home = filepath.Clean(home)
+	if dir == home || strings.HasPrefix(dir, home+"/") {
+		return "~" + dir[len(home):]
+	}
+	return dir
 }
 
 func loadedLine(l []servers.Loaded) string {
@@ -112,6 +124,7 @@ type model struct {
 	swapMB  []float64 // MB written to swap during each tick
 	width   int
 	lastOut uint64
+	started bool
 }
 
 func (m model) Init() tea.Cmd { return tea.Batch(doTick(0), fetchLoaded(m.cfg)) }
@@ -138,13 +151,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Tick(5*time.Second, func(time.Time) tea.Msg { return fetchLoaded(m.cfg)() })
 	case tick:
 		m.snap = Take(m.cfg, false)
-		if m.lastOut != 0 && m.snap.Mem.Swapouts >= m.lastOut {
+		if m.started && m.snap.Mem.Swapouts >= m.lastOut {
 			m.swapMB = append(m.swapMB, memory.MB((m.snap.Mem.Swapouts-m.lastOut)*m.snap.Mem.PageSize))
 			if len(m.swapMB) > history {
 				m.swapMB = m.swapMB[1:]
 			}
 		}
-		m.lastOut = m.snap.Mem.Swapouts
+		m.lastOut, m.started = m.snap.Mem.Swapouts, true
 		return m, doTick(time.Second)
 	}
 	return m, nil
@@ -213,7 +226,7 @@ func (m model) View() string {
 	if len(s.Recent) > 0 {
 		b.WriteString("\n")
 		for _, l := range s.Recent {
-			b.WriteString(dim.Render(clip(l, w)) + "\n")
+			b.WriteString(dim.Render(clip(tildeAll(l), w)) + "\n")
 		}
 	}
 	return box.Render(strings.TrimRight(b.String(), "\n"))
@@ -260,4 +273,13 @@ func clip(s string, w int) string {
 		return string(r[:w-1]) + "…"
 	}
 	return s
+}
+
+// tildeAll shortens every occurrence of the home directory in a journal line.
+func tildeAll(line string) string {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return line
+	}
+	return strings.ReplaceAll(line, filepath.Clean(home), "~")
 }
