@@ -30,7 +30,7 @@ $ mlx-garde status --watch
 │ swap                                            ▁▁▁▁▂▄█▆▂▁▁▁  1200 MB used, 0 MB/s   │
 │                                                                                      │
 │ job       python transcribe.py --language fr salon.wav  (pid 4242, 7m0s, in ~/code/… │
-│ queue 1   python eval.py --sample 20  (pid 4250, 2m0s, in ~/code/histos)             │
+│ queue 1   python eval.py --sample 20  (pid 4250, 2m0s, in ~/code/evals)              │
 │ loaded    omlx:Qwen3.8-27B-4bit                                                      │
 │                                                                                      │
 │       31.0 GB  python3.12                                                            │

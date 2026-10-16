@@ -21,8 +21,8 @@ func TestView(t *testing.T) {
 		snap: Snapshot{
 			At:     now,
 			Mem:    memory.Stats{TotalBytes: 64 << 30, AvailableBytes: 9 << 30, SwapUsed: 1200 << 20},
-			Holder: &lock.Job{PID: 4242, Dir: "~/code/phemios", Command: "python transcribe.py --language fr salon.wav", Since: now.Add(-7 * time.Minute)},
-			Queue:  []lock.Job{{PID: 4250, Dir: "~/code/histos", Command: "python eval.py --sample 20", Since: now.Add(-2 * time.Minute)}},
+			Holder: &lock.Job{PID: 4242, Dir: "~/code/transcribe", Command: "python transcribe.py --language fr salon.wav", Since: now.Add(-7 * time.Minute)},
+			Queue:  []lock.Job{{PID: 4250, Dir: "~/code/evals", Command: "python eval.py --sample 20", Since: now.Add(-2 * time.Minute)}},
 			Top:    []guard.Process{{RSS: 31 << 30, Name: "python3.12"}, {RSS: 9 << 30, Name: "OrbStack Helper"}},
 			Recent: []string{"[2026-10-16 23:43:07] END rc=0 12m4s swap OK (0 MB written, swap 0 MB → 0 MB) : python embed.py"},
 		},
