@@ -43,6 +43,12 @@ $ mlx-garde status --watch
 ## Install
 
 ```
+brew install --cask Odysseus-deep/tap/mlx-garde
+```
+
+Or from source (Go and the Xcode command line tools):
+
+```
 go install github.com/Odysseus-deep/mlx-garde/cmd/mlx-garde@latest
 ```
 

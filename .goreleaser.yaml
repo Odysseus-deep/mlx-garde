@@ -1,0 +1,57 @@
+# Release: push a tag (git tag v0.1.0 && git push origin v0.1.0); .github/workflows/release.yml runs this.
+# Local dry run: goreleaser release --snapshot --clean
+version: 2
+
+project_name: mlx-garde
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - main: ./cmd/mlx-garde
+    binary: mlx-garde
+    # cgo reads memory from the Mach kernel, so the build runs on a macOS arm64 machine.
+    env:
+      - CGO_ENABLED=1
+    goos: [darwin]
+    goarch: [arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: [README.md, LICENSE, config.example.toml, examples/*]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude: ["^docs:", "^test:", "^ci:"]
+
+homebrew_casks:
+  - name: mlx-garde
+    repository:
+      owner: Odysseus-deep
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Casks
+    homepage: https://github.com/Odysseus-deep/mlx-garde
+    description: Run heavy local LLM jobs one at a time, refuse those that won't fit in RAM, report swap
+    license: MIT
+    commit_author:
+      name: Guillaume Olivieri
+      email: guillaume.olivieri@thinkingsystems.fr
+    commit_msg_template: "mlx-garde {{ .Tag }}"
+    # The binary is not notarized: drop the quarantine flag so Gatekeeper lets it run.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/mlx-garde"]
+          end
